@@ -1,0 +1,444 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: capabilities.3scale.net/v1beta1
+  kind: Product
+  metadata:
+    annotations:
+      3scale_toolbox_created_at: '2023-03-24T09:45:48Z'
+      3scale_toolbox_version: 0.20.0
+    name: customer.management..v4.0.0..joquhrsv
+  spec:
+    name: TMF Customer Management (v4.0.0)
+    systemName: customer_management__v4_0_2_
+    description: TMF629 This is Swagger UI environment generated for the TMF Customer
+      Management specification
+    mappingRules:
+    - httpMethod: GET
+      pattern: "/customer$"
+      metricMethodRef: listcustomer
+      increment: 1
+      last: false
+    - httpMethod: POST
+      pattern: "/customer$"
+      metricMethodRef: createcustomer
+      increment: 1
+      last: false
+    - httpMethod: GET
+      pattern: "/customer/{id}$"
+      metricMethodRef: retrievecustomer
+      increment: 1
+      last: false
+    - httpMethod: DELETE
+      pattern: "/customer/{id}$"
+      metricMethodRef: deletecustomer
+      increment: 1
+      last: false
+    - httpMethod: PATCH
+      pattern: "/tmf-api/customerManagement/v4/customer/{id}$"
+      metricMethodRef: patchcustomer
+      increment: 1
+      last: false
+    - httpMethod: POST
+      pattern: "/tmf-api/customerManagement/v4/hub$"
+      metricMethodRef: registerlistener
+      increment: 1
+      last: false
+    - httpMethod: DELETE
+      pattern: "/tmf-api/customerManagement/v4/hub/{id}$"
+      metricMethodRef: unregisterlistener
+      increment: 1
+      last: false
+    - httpMethod: POST
+      pattern: "/tmf-api/customerManagement/v4/listener/customerCreateEvent$"
+      metricMethodRef: listentocustomercreateevent
+      increment: 1
+      last: false
+    - httpMethod: POST
+      pattern: "/tmf-api/customerManagement/v4/listener/customerAttributeValueChangeEvent$"
+      metricMethodRef: listentocustomerattributevaluechangeevent
+      increment: 1
+      last: false
+    - httpMethod: POST
+      pattern: "/tmf-api/customerManagement/v4/listener/customerStateChangeEvent$"
+      metricMethodRef: listentocustomerstatechangeevent
+      increment: 1
+      last: false
+    - httpMethod: POST
+      pattern: "/tmf-api/customerManagement/v4/listener/customerDeleteEvent$"
+      metricMethodRef: listentocustomerdeleteevent
+      increment: 1
+      last: false
+    - httpMethod: GET
+      pattern: "/customer/{version}/counters"
+      metricMethodRef: hits
+      increment: 1
+      last: false
+    - httpMethod: GET
+      pattern: "/echo"
+      metricMethodRef: listentocustomerstatechangeevent
+      increment: 1
+      last: true
+    metrics:
+      hits:
+        friendlyName: Hits
+        unit: hit
+        description: Number of API hits
+      Status_4XX:
+        friendlyName: Status_4XX
+        unit: hit
+        description: Status_4XX
+      Status_2XX:
+        friendlyName: Status_2XX
+        unit: hit
+        description: Status_2XX
+      Status_5XX:
+        friendlyName: Status_5XX
+        unit: hit
+        description: Status_5XX
+      Linux_x86_64:
+        friendlyName: Linux_x86_64
+        unit: hit
+        description: Linux_x86_64
+      Postman:
+        friendlyName: Postman
+        unit: hit
+        description: Postman
+      curl:
+        friendlyName: curl
+        unit: hit
+        description: curl
+    methods:
+      listcustomer:
+        friendlyName: listCustomer
+        description: This operation list or find Customer entities
+      createcustomer:
+        friendlyName: createCustomer
+        description: This operation creates a Customer entity.
+      retrievecustomer:
+        friendlyName: retrieveCustomer
+        description: This operation retrieves a Customer entity. Attribute selection
+          is enabled for all first level attributes.
+      deletecustomer:
+        friendlyName: deleteCustomer
+        description: This operation deletes a Customer entity.
+      patchcustomer:
+        friendlyName: patchCustomer
+        description: This operation updates partially a Customer entity.
+      registerlistener:
+        friendlyName: registerListener
+        description: Sets the communication endpoint address the service instance
+          must use to deliver information about its health state, execution state,
+          failures and metrics.
+      unregisterlistener:
+        friendlyName: unregisterListener
+        description: Resets the communication endpoint address the service instance
+          must use to deliver information about its health state, execution state,
+          failures and metrics.
+      listentocustomercreateevent:
+        friendlyName: listenToCustomerCreateEvent
+        description: Example of a client listener for receiving the notification CustomerCreateEvent
+      listentocustomerattributevaluechangeevent:
+        friendlyName: listenToCustomerAttributeValueChangeEvent
+        description: Example of a client listener for receiving the notification CustomerAttributeValueChangeEvent
+      listentocustomerstatechangeevent:
+        friendlyName: listenToCustomerStateChangeEvent
+        description: Example of a client listener for receiving the notification CustomerStateChangeEvent
+      listentocustomerdeleteevent:
+        friendlyName: listenToCustomerDeleteEvent
+        description: Example of a client listener for receiving the notification CustomerDeleteEvent
+    policies:
+    - name: cors
+      version: builtin
+      configuration:
+        allow_credentials: true
+        allow_methods:
+        - GET
+        - POST
+        - DELETE
+        - PUT
+        - PATCH
+        - OPTIONS
+        allow_headers:
+        - api-key
+      enabled: true
+    - name: url_rewriting
+      version: builtin
+      configuration:
+        query_args_commands:
+        - value_type: plain
+          op: set
+          arg: key1
+          value: add1
+        commands: []
+      enabled: true
+    - name: custom_metrics
+      version: builtin
+      configuration:
+        rules:
+        - increment: '1'
+          metric: Status_2XX
+          condition:
+            operations:
+            - left_type: liquid
+              right_type: plain
+              op: matches
+              right: '200'
+              left: "{{status}}"
+            combine_op: and
+        - increment: '1'
+          metric: Status_4XX
+          condition:
+            operations:
+            - left_type: plain
+              right_type: liquid
+              op: matches
+              right: "{{status}}"
+              left: '403'
+            combine_op: and
+        - increment: '1'
+          metric: Status_5XX
+          condition:
+            operations:
+            - left_type: liquid
+              right_type: plain
+              op: matches
+              right: '503'
+              left: "{{ status }}"
+            combine_op: and
+        - increment: '1'
+          metric: curl
+          condition:
+            operations:
+            - left_type: liquid
+              right_type: plain
+              op: matches
+              left: "{{ req.headers.user-agent }}"
+              right: curl*
+            combine_op: and
+        - increment: '1'
+          metric: Linux_x86_64
+          condition:
+            operations:
+            - left_type: liquid
+              right_type: plain
+              op: matches
+              right: Linux.
+              left: "{{ req.headers.user-agent }}"
+            combine_op: and
+        - increment: '1'
+          metric: Postman
+          condition:
+            operations:
+            - left_type: liquid
+              right_type: plain
+              op: matches
+              right: Postman.*
+              left: "{{ req.headers.user-agent }}"
+            combine_op: and
+        - increment: '1'
+          metric: response0k
+          condition:
+            operations:
+            - left_type: liquid
+              right_type: liquid
+              op: matches
+              left: "{{ resp.headers.Content-length }}"
+              right: "^([0-9]|[1-9][0-9][0-9]|1024)$"
+            combine_op: and
+      enabled: true
+    - name: headers
+      version: builtin
+      configuration:
+        response: []
+        request:
+        - value_type: plain
+          op: set
+          header: x-plan
+          value: TEST
+      enabled: false
+    - name: rate_limit
+      version: builtin
+      configuration:
+        limits_exceeded_error:
+          status_code: 429
+          error_handling: exit
+        configuration_error:
+          status_code: 500
+          error_handling: exit
+        connection_limiters: []
+        fixed_window_limiters: []
+        leaky_bucket_limiters:
+        - condition:
+            combine_op: and
+          key:
+            scope: service
+            name_type: plain
+          rate: 1
+          burst: 1
+      enabled: false
+    - name: liquid_context_debug
+      version: builtin
+      configuration: {}
+      enabled: false
+    - name: apicast
+      version: builtin
+      configuration: {}
+      enabled: true
+    - name: logging
+      version: builtin
+      configuration:
+        condition:
+          combine_op: and
+          operations: []
+        enable_access_logs: true
+        custom_logging: '[{{time_local}}] {{host}}:{{server_port}} {{remote_addr}}:{{remote_port}}
+          \***************\ "{{request}}\" {{status}} {{body_bytes_sent}} ({{request_time}})
+          {{post_action_impact}}****{{req.headers.API-KEY}}'
+        enable_json_logs: false
+        json_object_config: []
+      enabled: true
+    applicationPlans:
+      sandbox:
+        name: Sandbox
+        appsRequireApproval: false
+        trialPeriod: 0
+        setupFee: 0.0
+        custom: false
+        state: published
+        costMonth: 0.0
+        pricingRules:
+        - from: 1
+          to: 1000000
+          pricePerUnit: 0.01
+          metricMethodRef:
+            systemName: listcustomer
+        limits:
+        - period: eternity
+          value: 0
+          metricMethodRef:
+            systemName: unregisterlistener
+        - period: eternity
+          value: 0
+          metricMethodRef:
+            systemName: deletecustomer
+        - period: eternity
+          value: 0
+          metricMethodRef:
+            systemName: listentocustomerdeleteevent
+        - period: week
+          value: 8000
+          metricMethodRef:
+            systemName: hits
+        - period: minute
+          value: 5
+          metricMethodRef:
+            systemName: createcustomer
+        - period: eternity
+          value: 0
+          metricMethodRef:
+            systemName: createcustomer
+        - period: eternity
+          value: 0
+          metricMethodRef:
+            systemName: registerlistener
+        - period: minute
+          value: 4
+          metricMethodRef:
+            systemName: retrievecustomer
+        - period: minute
+          value: 3
+          metricMethodRef:
+            systemName: listcustomer
+        - period: day
+          value: 1000
+          metricMethodRef:
+            systemName: listcustomer
+        - period: eternity
+          value: 0
+          metricMethodRef:
+            systemName: patchcustomer
+        - period: eternity
+          value: 0
+          metricMethodRef:
+            systemName: listentocustomercreateevent
+      premium:
+        name: Premium
+        appsRequireApproval: true
+        trialPeriod: 0
+        setupFee: 0.0
+        custom: false
+        state: published
+        costMonth: 0.0
+        pricingRules: []
+        limits:
+        - period: minute
+          value: 200
+          metricMethodRef:
+            systemName: hits
+    backendUsages:
+      tmf629:
+        path: "/tmf-api/customerManagement/v4"
+      customer_management__v4_0_0_:
+        path: "/"
+    deployment:
+      apicastHosted:
+        authentication:
+          userkey:
+            authUserKey: api-key
+            credentials: headers
+            security:
+              hostHeader: ''
+              secretToken: Shared_secret_sent_from_proxy_to_API_backend_e32668dd94bf674e
+            gatewayResponse:
+              errorStatusAuthFailed: 403
+              errorHeadersAuthFailed: text/plain; charset=us-ascii
+              errorAuthFailed: Authentication failed
+              errorStatusAuthMissing: 403
+              errorHeadersAuthMissing: text/plain; charset=us-ascii
+              errorAuthMissing: Authentication parameters missing
+              errorStatusNoMatch: 404
+              errorHeadersNoMatch: text/plain; charset=us-ascii
+              errorNoMatch: No Mapping Rule matched
+              errorStatusLimitsExceeded: 429
+              errorHeadersLimitsExceeded: text/plain; charset=us-ascii
+              errorLimitsExceeded: 'Usage limit exceeded '
+- apiVersion: capabilities.3scale.net/v1beta1
+  kind: Backend
+  metadata:
+    annotations:
+      3scale_toolbox_created_at: '2023-03-24T09:45:50Z'
+      3scale_toolbox_version: 0.20.0
+    name: tmf629.qnvctwzi
+  spec:
+    name: tmf629
+    systemName: tmf629
+    privateBaseURL: https://tmf629-appdev-poc.apps.ocp4.quitala.eu:443
+    description: tmf629
+    mappingRules: []
+    metrics:
+      hits:
+        friendlyName: Hits
+        unit: hit
+        description: Number of API hits
+    methods: {}
+- apiVersion: capabilities.3scale.net/v1beta1
+  kind: Backend
+  metadata:
+    annotations:
+      3scale_toolbox_created_at: '2023-03-24T09:45:51Z'
+      3scale_toolbox_version: 0.20.0
+    name: customer.management..v4.0.0..wxejvgic
+  spec:
+    name: Customer Management (v4.0.0) Backend
+    systemName: customer_management__v4_0_0_
+    privateBaseURL: https://echo-api.apps.ocp4.quitala.eu:443/uyg-v3/v3/username
+    description: Backend of Customer Management (v4.0.0)
+    mappingRules: []
+    metrics:
+      hits:
+        friendlyName: Hits
+        unit: hit
+        description: Number of API hits
+    methods: {}

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: toolbox
+spec:
+  backoffLimit: 4
+  activeDeadlineSeconds: 30000
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: toolbox-job
+          image: registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0
+          env:
+            - name: HOME
+              value: /var/lib/toolbox
+          args:
+            - 3scale
+            - remote
+            - list
+          volumeMounts:
+            - name: toolbox-config
+              mountPath: /var/lib/toolbox
+      volumes:
+        - name: toolbox-config
+          secret:
+            secretName: 3scale-toolbox

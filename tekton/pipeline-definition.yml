@@ -1,0 +1,201 @@
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: 3scale-deploy-api
+spec:
+  inputs:
+    resources:
+      - name: repository
+        type: git
+    params:
+      - name: 3scale-remote-saas
+        description: Remote 3Scale SaaS configured in Secret
+      - name: api-spec
+        description: The OpenApi spec to import
+      - name: api-version
+        description: The version of the API to deploy
+      - name: secretName
+        description: Name of the secret containing the 3scale_toolbox remotes list
+      - name: api-base-url-impl
+        description: The URL of the API Backend (implementation)
+      - name: api-base-url-staging
+        description: Exposed URL of the staging API (exposure)
+      - name: api-base-url-live
+        description: Exposed URL of the production API (exposure)
+      - name: account
+        description: Application's account
+        default: testaccount
+  steps:
+    - name: import-openapi
+      image: nmasse/3scale-toolbox:master
+      workingDir: /workspace/repository
+      env:
+      - name: "HOME"
+        value: "/config"
+      command:
+      - 3scale
+      args:
+      - import
+      - openapi
+      - -d
+      - $(inputs.params.3scale-remote-saas)
+      - $(inputs.params.api-spec)
+      - --override-public-basepath=/api/$(inputs.params.api-version)/open-data
+      - --override-private-basepath=/open-data
+      - --override-private-base-url=$(inputs.params.api-base-url-impl)
+      - --staging-public-base-url=$(inputs.params.api-base-url-staging)
+      - --production-public-base-url=$(inputs.params.api-base-url-live)
+      - --target_system_name=open-data-$(inputs.params.api-version)
+      - --default-credentials-userkey=dummy
+      volumeMounts:
+      - name: "toolbox-config"
+        mountPath: /config
+
+    # 3scale service apply 3scale-saas open-data-v1 --name="open-data (v1)"
+    - name: update-service-name
+      image: nmasse/3scale-toolbox:master
+      workingDir: /workspace/repository
+      env:
+      - name: "HOME"
+        value: "/config"
+      command:
+      - 3scale
+      args:
+      - service
+      - apply
+      - $(inputs.params.3scale-remote-saas)
+      - open-data-$(inputs.params.api-version)
+      - --name=open-data ($(inputs.params.api-version))
+      volumeMounts:
+      - name: "toolbox-config"
+        mountPath: /config    
+
+
+    # 3scale application-plan apply 3scale-saas open-data ob-plan -n "OB Test Plan" --default
+    - name: create-application-plan
+      image: nmasse/3scale-toolbox:master
+      workingDir: /workspace/repository
+      env:
+      - name: "HOME"
+        value: "/config"
+      command:
+      - 3scale
+      args:
+      - application-plan
+      - apply
+      - 3scale-saas
+      - open-data-$(inputs.params.api-version)
+      - ob-plan
+      - -n
+      - "OB Test Plan"
+      - --default
+      volumeMounts:
+      - name: "toolbox-config"
+        mountPath: /config
+
+
+    # 3scale application apply 3scale-saas 1234567890abcdef --account=testaccount --name="OB Application" --description="Created from the CLI" --plan=ob-plan --service=open-data
+    - name: create-application
+      image: nmasse/3scale-toolbox:master
+      workingDir: /workspace/repository
+      env:
+      - name: "HOME"
+        value: "/config"
+      command:
+      - 3scale
+      args:
+      - application
+      - apply
+      - 3scale-saas
+      - 1234567890abcdef$(inputs.params.api-version)
+      - --account=test@account.com
+      - --name="OB Application $(inputs.params.api-version)"
+      - --description="Created from Tekton"
+      - --plan=ob-plan
+      - --service=open-data-$(inputs.params.api-version)
+      volumeMounts:
+      - name: "toolbox-config"
+        mountPath: /config
+
+
+    - name: smoke-test-staging
+      image: apache/camel-k:1.0.0-M2
+      command:
+        - curl
+      args:
+        - "-f"
+        - "$(inputs.params.api-base-url-staging)/api/$(inputs.params.api-version)/open-data/banks/100?user_key=1234567890abcdef$(inputs.params.api-version)"
+
+
+    # 3scale proxy-config promote 3scale-saas open-data
+    - name: promote-api
+      image: nmasse/3scale-toolbox:master
+      workingDir: /workspace/repository
+      env:
+      - name: "HOME"
+        value: "/config"
+      command:
+      - 3scale
+      args:
+      - proxy-config
+      - promote
+      - 3scale-saas
+      - open-data-$(inputs.params.api-version)
+      volumeMounts:
+      - name: "toolbox-config"
+        mountPath: /config
+
+  volumes:
+  - name: toolbox-config
+    secret:
+      secretName: $(inputs.params.secretName)
+
+
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: 3scale-pipeline
+spec:
+  params:
+    - name: 3scale-remote-saas
+      type: string
+      default: 3scale-saas
+    - name: api-version
+      type: string
+      default: v1
+    - name: api-base-url-staging
+      type: string
+    - name: api-base-url-live
+      type: string
+    - name: api-base-url-impl
+      type: string
+  resources:
+    - name: source-repo
+      type: git
+  tasks:
+    - name: api-deployment-dev
+      taskRef:
+        name: 3scale-deploy-api
+      resources:
+        inputs:
+          - name: repository
+            resource: source-repo
+      params:
+        - name: 3scale-remote-saas
+          value: $(params.3scale-remote-saas)
+        - name: api-spec
+          value: "api/ob-api.json"
+        - name: secretName
+          value: "3scale-toolbox"
+        - name: api-version
+          value: $(params.api-version)
+        - name: api-base-url-staging
+          value: $(params.api-base-url-staging)
+        - name: api-base-url-live
+          value: $(params.api-base-url-live)
+        - name: api-base-url-impl
+          value: $(params.api-base-url-impl)

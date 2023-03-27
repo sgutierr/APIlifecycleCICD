@@ -1,0 +1,40 @@
+---
+plan:
+  name: Sandbox
+  state: published
+  setup_fee: 0.0
+  cost_per_month: 0.0
+  trial_period_days: 0
+  cancellation_period: 0
+  approval_required: false
+  system_name: sandbox
+limits:
+- period: minute
+  value: 2
+  metric_system_name: hits
+pricingrules: []
+plan_features:
+- name: Free
+  system_name: free
+  scope: application_plan
+  visible: true
+  description: Free
+- name: Testing
+  system_name: testing
+  scope: application_plan
+  visible: true
+  description: Testing
+- name: Limited
+  system_name: Limited
+  scope: application_plan
+  visible: true
+  description: Limited
+metrics:
+- name: hits
+  system_name: hits
+  friendly_name: Hits
+  description: Number of API hits
+  unit: hit
+methods: []
+created_at: '2023-03-22T08:41:42Z'
+toolbox_version: 0.20.0

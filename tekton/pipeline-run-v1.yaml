@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+  name: 3scale-pipeline-run-v1
+spec:
+  pipelineRef:
+    name: 3scale-pipeline
+  resources:
+    - name: source-repo
+      resourceRef:
+        name: common-git-repo
+  params:
+    - name: api-version
+      value: v1
+    - name: api-base-url-staging
+      value: "http://apicast-staging-camelk-dev-openbanking.apps-crc.testing:80"
+    - name: api-base-url-live
+      value: "http://apicast-live-camelk-dev-openbanking.apps-crc.testing:80"
+    - name: api-base-url-impl
+      value: "http://ob-camelk-dev-openbanking.apps-crc.testing:80"
