@@ -2,7 +2,7 @@
     "openapi": "3.0.2",
     "info": {
         "title": "OIDC API (1.0)",
-        "version": "1.0",
+        "version": "1.1",
         "description": "OIDC API for authenticating APIs",
         "contact": {
             "name": "sgutierr"
@@ -93,6 +93,16 @@
                         "description": "TCS post response"
                     }
                 }
+            }
+        },
+        "/health": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "health status"
+                    }
+                },
+                "operationId": "getid"
             }
         }
     },
