@@ -1,0 +1,171 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: 3scaletoolbox
+  namespace: appdev-apimanager
+spec:
+  params:
+    - name: appName
+      type: string
+    - description: Name of the secret containing the 3scale_toolbox remotes list
+      name: secretName
+      type: string
+    - name: appName
+      type: string
+    - description: Name of the secret containing the 3scale_toolbox remotes list
+      name: secretName
+      type: string
+    - description: The OpenApi spec to import
+      name: api-spec
+      type: string
+    - description: The id of the API
+      name: api-name
+      type: string
+    - description: The version of the API to deploy
+      name: api-version
+      type: string
+    - description: Name of the secret containing the 3scale_toolbox remotes list
+      name: secretName
+      type: string
+    - description: The URL of the API Backend (implementation)
+      name: api-base-url-impl
+      type: string
+    - description: Exposed URL of the staging API (exposure)
+      name: api-base-url-staging
+      type: string
+    - description: Exposed URL of the production API (exposure)
+      name: api-base-url-live
+      type: string
+    - description: '3scale environment (INT,PRE,PROD)'
+      name: api-environment
+      type: string
+    - description: 3scale test account
+      name: test-account
+      type: string
+  steps:
+    - args:
+        - import
+        - openapi
+        - '-d'
+        - $(inputs.params.api-environment)
+        - $(inputs.params.api-spec)
+        - '--override-private-base-url=$(inputs.params.api-base-url-impl)'
+        - '--staging-public-base-url=$(inputs.params.api-base-url-staging)'
+        - '--production-public-base-url=$(inputs.params.api-base-url-live)'
+        - >-
+          --target_system_name=$(inputs.params.api-name)_$(inputs.params.api-version)
+      command:
+        - 3scale
+      env:
+        - name: HOME
+          value: /config
+      image: 'registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0'
+      name: import-oas
+      resources: {}
+      volumeMounts:
+        - mountPath: /config
+          name: toolbox-config
+      workingDir: /workspace/output
+    - args:
+        - application-plan
+        - import
+        - '-f'
+        - apis/$(inputs.params.api-name)/app_plan/sandbox_app_plan.json
+        - $(inputs.params.api-environment)
+        - $(inputs.params.api-name)_$(inputs.params.api-version)
+      command:
+        - 3scale
+      env:
+        - name: HOME
+          value: /config
+      image: 'registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0'
+      name: import-sandbox-app-plan
+      resources: {}
+      volumeMounts:
+        - mountPath: /config
+          name: toolbox-config
+      workingDir: /workspace/output
+    - image: 'registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0'
+      name: generate-key
+      resources: {}
+      script: |
+        #!/usr/bin/env bash
+         echo $RANDOM | md5sum | head -c 28  > /workspace/KEY    
+      volumeMounts:
+        - mountPath: /config
+          name: toolbox-config
+      workingDir: /workspace/output
+    - env:
+        - name: HOME
+          value: /config
+      image: 'registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0'
+      name: create-dummy-application
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+        export KEY=$(cat /workspace/KEY)
+        echo $KEY
+        3scale application create \
+        --user-key=${KEY} \
+        --description=sanbox_test_client $(inputs.params.api-environment)
+        $(inputs.params.test-account)
+        $(inputs.params.api-name)_$(inputs.params.api-version) \
+        sandbox sandbox-test-client            
+      volumeMounts:
+        - mountPath: /config
+          name: toolbox-config
+      workingDir: /workspace/output
+    - args:
+        - policies
+        - import
+        - '-f'
+        - apis/$(inputs.params.api-name)/policies/policies.yml
+        - $(inputs.params.api-environment)
+        - $(inputs.params.api-name)_$(inputs.params.api-version)        
+      command:
+        - 3scale
+      env:
+        - name: HOME
+          value: /config
+      image: 'registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0'
+      name: import-policies
+      resources: {}
+      volumeMounts:
+        - mountPath: /config
+          name: toolbox-config
+      workingDir: /workspace/output      
+    - image: 'registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0'
+      name: smoke-test-staging
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+        export KEY=$(cat /workspace/KEY)
+        echo $KEY
+        curl -k $(api-base-url-staging)/health -H api-key:${KEY}        
+      volumeMounts:
+        - mountPath: /config
+          name: toolbox-config
+      workingDir: /workspace/output
+    - args:
+        - proxy-config
+        - promote
+        - $(inputs.params.api-environment)
+        - $(inputs.params.api-name)_$(inputs.params.api-version)
+      command:
+        - 3scale
+      env:
+        - name: HOME
+          value: /config
+      image: 'registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0'
+      name: promote-production
+      resources: {}
+      volumeMounts:
+        - mountPath: /config
+          name: toolbox-config
+      workingDir: /workspace/output
+  volumes:
+    - name: toolbox-config
+      secret:
+        secretName: $(inputs.params.secretName)
+  workspaces:
+    - name: output

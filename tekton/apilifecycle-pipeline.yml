@@ -1,0 +1,115 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: apilifecycle
+  namespace: appdev-apimanager
+spec:
+  params:
+    - default: v1
+      name: api-version
+      type: string
+    - default: 'https://oidc-api-test-apicast-staging.apps.ocp4.quitala.eu:443'
+      name: api-base-url-staging
+      type: string
+    - default: 'https://oidc-api-test-apicast-production.apps.ocp4.quitala.eu:443'
+      name: api-base-url-live
+      type: string
+    - default: 'https://echo-api.apps.ocp4.quitala.eu'
+      name: api-base-url-impl
+      type: string
+    - name: api-name
+      type: string
+    - default: 'https://oidc-api-prod-apicast-production.apps.ocp4.quitala.eu:443'
+      name: api-base-url-live-prod
+      type: string
+    - default: 'https://oidc-api-prod-apicast-staging.apps.ocp4.quitala.eu:443'
+      name: api-base-url-staging-prod
+      type: string
+  tasks:
+    - name: 3scalepre
+      params:
+        - name: appName
+          value: toolbox
+        - name: secretName
+          value: 3scale-toolbox
+        - name: api-spec
+          value: apis/$(params.api-name)/spec/$(params.api-name).json
+        - name: api-version
+          value: $(params.api-version)
+        - name: api-base-url-staging
+          value: $(params.api-base-url-staging)
+        - name: api-base-url-live
+          value: $(params.api-base-url-live)
+        - name: api-base-url-impl
+          value: $(params.api-base-url-impl)
+        - name: api-name
+          value: $(params.api-name)
+        - name: api-environment
+          value: hetzner
+        - name: test-account
+          value: '3'
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: Task
+        name: 3scaletoolbox
+      workspaces:
+        - name: output
+          workspace: source-code
+    - name: 3scaleprod
+      params:
+        - name: appName
+          value: toolbox
+        - name: secretName
+          value: 3scale-toolbox
+        - name: api-spec
+          value: apis/$(params.api-name)/spec/$(params.api-name).json
+        - name: api-version
+          value: $(params.api-version)
+        - name: api-base-url-staging
+          value: $(params.api-base-url-staging-prod)
+        - name: api-base-url-live
+          value: $(params.api-base-url-live-prod)
+        - name: api-base-url-impl
+          value: $(params.api-base-url-impl)
+        - name: api-name
+          value: $(params.api-name)
+        - name: api-environment
+          value: prod
+        - name: test-account
+          value: '8'
+      runAfter:
+        - 3scalepre
+      taskRef:
+        kind: Task
+        name: 3scaletoolbox
+      workspaces:
+        - name: output
+          workspace: source-code
+    - name: git-clone
+      params:
+        - name: url
+          value: 'https://github.com/sgutierr/APIlifecycleCICD.git'
+        - name: revision
+          value: main
+        - name: submodules
+          value: 'true'
+        - name: depth
+          value: '1'
+        - name: sslVerify
+          value: 'true'
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: gitInitImage
+          value: >-
+            registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8@sha256:afc5d3f9efe26c7042635d43b8ffd09d67936e3d0b6b901dc08a33e20313d361
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: source-code
+  workspaces:
+    - name: source-code

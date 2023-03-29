@@ -24,15 +24,14 @@ Install Operator: Red Hat OpenShift Pipelines
 
 PIPELINE
 
-** Check prerequisites
+** Clone repository (API spec,application plans, policies)
 ** DEV environment
 **** Import API spec: importOpenAPI() 
-**** Create API Backend: creationAPIBackend()
-**** Application plans creation 
+**** Application plans creation: importing a sandbox app plan 
+**** Generate API-KEY
 **** Application creation
 **** TEST API: runIntegrationTests
 **** Promote to TEST APIcast
-**** Export product to git: uploadProduct()
 
 ** Promotion to PROD
 **** Import API product
@@ -67,3 +66,26 @@ Example of Application apply :
 3scale application apply --account 3 --user-key 802e2ccd4008b006e7272aef941750da --description sandbox_test_client --name  sandbox_test_client --plan sandbox --service oidc_api hetzner
 Example of Application delete :
 3scale application delete hetzner 211
+
+
+   image-registry.openshift-image-registry.svc:5000/appdev-apimanager/toolbox-rhel82
+registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0
+https://github.com/sgutierr/APIlifecycleCICD.git
+
+
+export KEY=$(3scale application show prod 227 | grep 227 | awk '{ print $9 }')
+
+curl "https://oidc-api-test-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize" -H 'api-key:"'"$KEY"'"'
+
+curl "https://oidc-api-test-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize" -H 'api-key:b2da1981a3e4cb52304e0cdaedad55d2'
+
+
+curl "https://oidc-api-test-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize$" -H api-key:| more user_key 
+
+curl "https://oidc-api-prod-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize -H 'api-key:'$KEY
+
+curl -k $ENDPOINT -H'user_key:'$user_key
+
+
+oc delete pod --field-selector=status.phase==Failed
+oc delete pod --field-selector=status.phase==Succeeded

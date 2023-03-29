@@ -1,0 +1,18 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: 3scaletoolbox
+spec:
+  params:
+    - name: appName
+      type: string
+  steps:
+    - args:
+        - remote
+        - list
+      command:
+        - 3scale
+      image: >-
+        image-registry.openshift-image-registry.svc:5000/appdev-apimanager/toolbox-rhel82
+      name: toolbox
+      resources: {}
