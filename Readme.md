@@ -1,91 +1,44 @@
 
-Assumptions: 
-   - Two application plans per API with name: sandbox and production
-   - One API backend creation - From the Admin console is possible to add more backends.
+# Installation:
+Steps for installing the 3scale APILifecycle pipeline
 
-Parameters:
-   - Developer email: admin+test@3scale.apps.ocp4.quitala.eu (DEV,PROD)
-   - Service ID
-   - Remote (DEV,PROD)
-   - staging and production URLs (DEV,PROD)
-   - URL Backend
+## 3scale toolbox
+3scale toolbox is a CLI which allows you to set up 3scale instances. 
+This is the link to the repo and documentation: https://github.com/3scale/3scale_toolbox
 
+### Remotes set up:
+Generate the 3scalerc.yaml file, which you can do by installing the 3scale toolbox in your local. 
+You need to add two toolbox "remotes", one will point to the DEV and the other to the PROD 3scale instance.
 
-toolbox.secretName is the name of the Kubernetes Secret containing the 3scale_toolbox configuration file
-toolbox.openshiftProject is the OpenShift project in which Kubernetes Jobs will be created
+Please refer to the documentation for further information about 3scale TOKEN generation: https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.13/html/admin_portal_guide/tokens .
 
+This is an example of the commands used to create a new remote:
+   - 3scale remote add DEV https://$TOKEN@"3scale-admin-url"
+   - 3scale remote add PROD https://$TOKEN@"3scale-admin-url2"
 
-Preparation:
-3scale remote add 3scale-tenant https://$TOKEN@$TENANT.3scale.net/
-oc create secret generic 3scale-toolbox --from-file=$HOME/.3scalerc.yaml
+Once this file is generated, create the OpenShift secret in the namespace where you will run the pipelines:
+   - **oc create secret generic 3scale-toolbox --from-file=$HOME/.3scalerc.yaml**
 
+## OpenShift pipelines
 
-Install Operator: Red Hat OpenShift Pipelines
+Through the operator hub, install the operator: Red Hat OpenShift Pipelines and follow these steps:
+   - 1 Create a persistent volume claim (PVC) to store the git repository on task containers:
+      - **oc create -f tekton/pvc.yml**
+   - 2 Create the task 3scaletoolbox:
+      - **oc apply -f tekton/apilifecycle-task.yml**
+   - 3 Create the pipeline: 
+      - **oc apply -f tekton/apilifecycle-pipeline.yml**
+### Before running the pipeline first time:
+   - 1- You need to know the account id of the 3scale user which test the API in each environment.To find out the id you can run:
+      -**3scale account find DEV john**
+      -**3scale account find PROD john**
 
-PIPELINE
-
-** Clone repository (API spec,application plans, policies)
-** DEV environment
-**** Import API spec: importOpenAPI() 
-**** Application plans creation: importing a sandbox app plan 
-**** Generate API-KEY
-**** Application creation
-**** TEST API: runIntegrationTests
-**** Promote to TEST APIcast
-
-** Promotion to PROD
-**** Import API product
-**** TEST API: runIntegrationTests
-
-Export application plan configuration:
-
-3scale application-plan export -k hetzner oidc_api sandbox -f sandbox_app_plan.json
-3scale application-plan export -k hetzner oidc_api production -f production_app_plan.json
-
-Create an application:
-    export ACCOUNT_ID=$(3scale account find hetzner admin+test@3scale.apps.ocp4.quitala.eu |  grep id | awk '{ print $3 }')
- for anonymous policy we set the user-key now:  
-    3scale application create --user-key 802e2ccd4 --description sandbox_test_client hetzner $ACCOUNT_ID oidc_api sandbox sandbox_test_client
- for general case we use a randmon string:
-    export USERKEY=$(echo $RANDOM | md5sum | head -c 28; echo;)
-    3scale application create --user-key $USERKEY --description sandbox_test_client hetzner $ACCOUNT_ID oidc_api sandbox sandbox_test_client
-
-
-Export a product:
-
-3scale product export -f oidc_product.yaml hetzner oidc_api
-
-
-
-3scale account find hetzner admin+test@3scale.apps.ocp4.quitala.eu 
-
-
-
-
-Example of Application apply :
-3scale application apply --account 3 --user-key 802e2ccd4008b006e7272aef941750da --description sandbox_test_client --name  sandbox_test_client --plan sandbox --service oidc_api hetzner
-Example of Application delete :
-3scale application delete hetzner 211
-
-
-   image-registry.openshift-image-registry.svc:5000/appdev-apimanager/toolbox-rhel82
-registry.redhat.io/3scale-amp2/toolbox-rhel8:3scale2.13.0
-https://github.com/sgutierr/APIlifecycleCICD.git
-
-
-export KEY=$(3scale application show prod 227 | grep 227 | awk '{ print $9 }')
-
-curl "https://oidc-api-test-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize" -H 'api-key:"'"$KEY"'"'
-
-curl "https://oidc-api-test-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize" -H 'api-key:b2da1981a3e4cb52304e0cdaedad55d2'
-
-
-curl "https://oidc-api-test-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize$" -H api-key:| more user_key 
-
-curl "https://oidc-api-prod-apicast-staging.apps.ocp4.quitala.eu:443/common/security/v3/oauth20/authorize -H 'api-key:'$KEY
-
-curl -k $ENDPOINT -H'user_key:'$user_key
-
-
-oc delete pod --field-selector=status.phase==Failed
-oc delete pod --field-selector=status.phase==Succeeded
+# Running the APIlifecycle pipeline:   
+## Parameters:
+   - **version**: this string represents the major version of the API, it doesn't include information about minor versions, for example: "v1","1_x","release1"..
+   - **api name**: identifies the API, this string is used to browse the git repo to locate the API spec: /apis/{api-name}/spec/{api-ane}.json
+   - **api-base-url-staging**: this the URL exposed by the staging API gateway in TEST/PRE environment
+   - **api-base-url-live**: this the URL exposed by the production API gateway in TEST/PRE environment 
+   - **api-base-url-staging-prod**: this the URL exposed by the staging API gateway in PROD environment
+   - **api-base-url-live-prod**: this the URL exposed by the production API gateway in PROD environment
+   - **Workspaces --> source-code**: to download the git repo an OpenShift persistent volume is required, so you need to select a PVC.

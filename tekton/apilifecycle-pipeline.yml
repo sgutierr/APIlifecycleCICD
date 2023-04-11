@@ -25,6 +25,18 @@ spec:
     - default: 'https://oidc-api-prod-apicast-staging.apps.ocp4.quitala.eu:443'
       name: api-base-url-staging-prod
       type: string
+    - default: '3'
+      name: test-account-dev
+      type: string      
+    - default: '8'
+      name: test-account-prod
+      type: string    
+    - default: 'DEV'
+      name: remote-for-dev
+      type: string          
+    - default: 'PROD'
+      name: remote-for-prod
+      type: string          
   tasks:
     - name: 3scalepre
       params:
@@ -45,9 +57,9 @@ spec:
         - name: api-name
           value: $(params.api-name)
         - name: api-environment
-          value: hetzner
+          value: $(params.remote-for-dev)
         - name: test-account
-          value: '3'
+          value: $(params.test-account-dev)
       runAfter:
         - git-clone
       taskRef:
@@ -75,9 +87,9 @@ spec:
         - name: api-name
           value: $(params.api-name)
         - name: api-environment
-          value: prod
+          value: $(params.remote-for-prod)
         - name: test-account
-          value: '8'
+          value: $(params.test-account-prod)
       runAfter:
         - 3scalepre
       taskRef:
