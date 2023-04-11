@@ -36,11 +36,13 @@ Through the operator hub, install the operator: Red Hat OpenShift Pipelines and 
       - **3scale account find PROD john**
 
 # Running the APIlifecycle pipeline:   
-## Parameters:
-   - **version**: this string represents the major version of the API, it doesn't include information about minor versions, for example: "v1","1_x","release1"..
-   - **api name**: identifies the API, this string is used to browse the git repo to locate the API spec: /apis/{api-name}/spec/{api-ane}.json
-   - **api-base-url-staging**: this the URL exposed by the staging API gateway in TEST/PRE environment
-   - **api-base-url-live**: this the URL exposed by the production API gateway in TEST/PRE environment 
-   - **api-base-url-staging-prod**: this the URL exposed by the staging API gateway in PROD environment
-   - **api-base-url-live-prod**: this the URL exposed by the production API gateway in PROD environment
-   - **Workspaces --> source-code**: to download the git repo an OpenShift persistent volume is required, so you need to select a PVC.
+## Configuration parameters:
+| Name  |  Type | Description  | Example |
+|---|---|---|---|
+| **version** | string | represents the major version of the API | v1 |
+| **api name** | string | identifies the API, this string is used to browse the git repo to locate the API spec: /apis/{api-name}/spec/{api-nane}.json  | oidc_api  |
+| **api-base-url-staging** | string| the URL exposed by the staging API gateway in TEST/PRE environment | |
+| **api-base-url-live** | string | the URL exposed by the production API gateway in TEST/PRE environment |  |
+| **api-base-url-staging-prod** | string | URL exposed by the staging API gateway in PROD env |  | 
+| **api-base-url-live-prod** | string | URL exposed by the production API gateway in PROD env |  | 
+| **Workspaces --> source-code** | string | OpenShift persistent volume claim required |  | 
