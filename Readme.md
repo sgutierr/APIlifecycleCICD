@@ -4,7 +4,7 @@
 # Installation:
 Steps for installing the 3scale APILifecycle pipeline
 
-## 3scale toolbox
+## 1. 3scale toolbox
 3scale toolbox is a CLI which allows you to set up 3scale instances. 
 This is the link to the repo and documentation: https://github.com/3scale/3scale_toolbox
 
@@ -12,7 +12,7 @@ This is the link to the repo and documentation: https://github.com/3scale/3scale
 Generate the 3scalerc.yaml file, which you can do by installing the 3scale toolbox in your local. 
 You need to add two toolbox "remotes", one will point to the DEV and the other to the PROD 3scale instance.
 
-Please refer to the documentation for further information about 3scale TOKEN generation: https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.13/html/admin_portal_guide/tokens .
+For further information about 3scale TOKEN generation: https://access.redhat.com/documentation/en-us/red_hat_3scale_api_management/2.13/html/admin_portal_guide/tokens 
 
 This is an example of the commands used to create a new remote:
    - 3scale remote add DEV https://$TOKEN@"3scale-admin-url"
@@ -21,7 +21,7 @@ This is an example of the commands used to create a new remote:
 Once this file is generated, create the OpenShift secret in the namespace where you will run the pipelines:
    - **oc create secret generic 3scale-toolbox --from-file=$HOME/.3scalerc.yaml**
 
-## OpenShift pipelines
+## 2. OpenShift pipelines
 
 Through the operator hub, install the operator: Red Hat OpenShift Pipelines and follow these steps:
    - 1 Create a persistent volume claim (PVC) to store the git repository on task containers:
@@ -32,8 +32,8 @@ Through the operator hub, install the operator: Red Hat OpenShift Pipelines and 
       - **oc apply -f tekton/apilifecycle-pipeline.yml**
 ### Before running the pipeline first time:
    - 1- You need to know the account id of the 3scale user which test the API in each environment.To find out the id you can run:
-      -**3scale account find DEV john**
-      -**3scale account find PROD john**
+      - **3scale account find DEV john**
+      - **3scale account find PROD john**
 
 # Running the APIlifecycle pipeline:   
 ## Parameters:
