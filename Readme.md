@@ -1,5 +1,5 @@
 ## How it works?
-![alt text](https://github.com/sgutierr/APIlifecycleCICD/blob/master/image1.png?raw=true)
+![alt text](https://github.com/sgutierr/APIlifecycleCICD/blob/main/docs/image1.png?raw=true)
 
 # Installation:
 Steps for installing the 3scale APILifecycle pipeline
